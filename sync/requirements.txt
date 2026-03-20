@@ -1,0 +1,6 @@
+flask==3.1.0
+python-dotenv==1.0.1
+requests==2.32.3
+garminconnect==0.2.25
+gspread==6.1.4
+google-auth==2.38.0

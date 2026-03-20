@@ -11,3 +11,5 @@ out/
 dist/
 .DS_Store
 *.log
+sync/oura_token.json
+service-account.json
