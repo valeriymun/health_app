@@ -1,5 +1,17 @@
-"""Garmin Connect integration service using garminconnect library."""
+"""Garmin Connect integration service using garminconnect library.
 
+Authentication order:
+  1. Cached `garth` tokens at ``settings.garmin_token_store`` (default
+     ``~/.garminconnect``). This avoids re-entering credentials and survives MFA.
+  2. Email/password from settings (``GARMIN_EMAIL`` / ``GARMIN_PASSWORD``).
+     On a successful password login the tokens are dumped to the token store
+     so subsequent runs use path (1).
+
+The module-level client is dropped on any error so the next call re-auths
+cleanly instead of reusing a poisoned session.
+"""
+
+import os
 from datetime import date, datetime, timedelta
 
 from garminconnect import Garmin
@@ -18,13 +30,47 @@ from app.models.health import (
 _garmin_client: Garmin | None = None
 
 
+def _token_store_path() -> str:
+    return os.path.expanduser(settings.garmin_token_store or "~/.garminconnect")
+
+
+def _try_token_login() -> Garmin | None:
+    """Attempt to log in using cached garth tokens. Returns client or None."""
+    path = _token_store_path()
+    if not os.path.isdir(path):
+        return None
+    try:
+        client = Garmin()
+        # garminconnect.login(tokenstore=...) loads cached oauth1/oauth2 tokens.
+        client.login(path)
+        return client
+    except Exception:
+        return None
+
+
+def _password_login() -> Garmin:
+    if not settings.garmin_email or not settings.garmin_password:
+        raise ValueError(
+            "Garmin auth failed: no cached tokens at "
+            f"{_token_store_path()} and GARMIN_EMAIL/PASSWORD not set"
+        )
+    client = Garmin(settings.garmin_email, settings.garmin_password)
+    client.login()
+    # Persist tokens for next time so we can skip the password path.
+    try:
+        os.makedirs(_token_store_path(), exist_ok=True)
+        client.garth.dump(_token_store_path())
+    except Exception:
+        pass  # token caching is best-effort; auth still succeeded
+    return client
+
+
 def _get_client() -> Garmin:
     global _garmin_client
-    if _garmin_client is None:
-        if not settings.garmin_email or not settings.garmin_password:
-            raise ValueError("Garmin credentials not configured")
-        _garmin_client = Garmin(settings.garmin_email, settings.garmin_password)
-        _garmin_client.login()
+    if _garmin_client is not None:
+        return _garmin_client
+    client = _try_token_login() or _password_login()
+    _garmin_client = client
     return _garmin_client
 
 
@@ -39,7 +85,13 @@ def sync_garmin_data(
     end_date: date | None = None,
 ) -> dict:
     """Sync data from Garmin Connect."""
-    client = _get_client()
+    try:
+        client = _get_client()
+        # Cheap call to confirm the session is alive; reset on failure.
+        client.get_full_name()
+    except Exception:
+        _reset_client()
+        client = _get_client()
 
     if not end_date:
         end_date = date.today()

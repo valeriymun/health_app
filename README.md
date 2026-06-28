@@ -1,13 +1,14 @@
 # Health Dashboard
 
-Personal health data dashboard aggregating data from **Apple Health**, **Oura Ring**, and **Garmin Connect**.
+Personal health data dashboard aggregating data from **Apple Health**, **Oura Ring**, **Garmin Connect**, and **Hevy**.
 
 ## Features
 
 - **Unified Dashboard** — View trends for heart rate, HRV, sleep, steps, workouts across all sources
 - **Apple Health** — Import via XML export upload or auto-sync via Apple Shortcuts
 - **Oura Ring** — API integration with full history sync
-- **Garmin Connect** — Full history sync including activities, sleep, and body metrics
+- **Garmin Connect** — Full history sync including activities, sleep, and body metrics. Uses cached `garth` tokens at `~/.garminconnect` if present (skips re-entering password / MFA), falls back to email + password.
+- **Hevy** — Strength workouts with set-level detail (weights, reps, RPE) via the Hevy API v1 (`/api/ingest/hevy/sync`, `/api/ingest/hevy/status`)
 - **Health Reports** — Download Markdown reports to use with Claude as your AI health advisor
 
 ## Quick Start
@@ -81,3 +82,5 @@ npm run dev
 | `/api/ingest/apple-health/shortcuts` | POST | Apple Shortcuts webhook |
 | `/api/ingest/oura/sync` | POST | Sync Oura data |
 | `/api/ingest/garmin/sync` | POST | Sync Garmin data |
+| `/api/ingest/hevy/sync` | POST | Sync Hevy strength workouts (sets + reps + weight) |
+| `/api/ingest/hevy/status` | GET  | Verify Hevy API key and return remote workout count |

@@ -24,7 +24,7 @@ router = APIRouter(prefix="/api/reports", tags=["reports"])
 @router.get("/health-summary")
 async def generate_health_summary(
     days: int = Query(30, ge=1, le=365),
-    format: str = Query("json", regex="^(json|markdown)$"),
+    format: str = Query("json", pattern="^(json|markdown)$"),
     db: Session = Depends(get_db),
 ):
     """Generate a comprehensive health summary report for Claude analysis."""

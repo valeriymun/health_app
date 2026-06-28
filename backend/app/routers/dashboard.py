@@ -122,7 +122,7 @@ async def get_overview(db: Session = Depends(get_db)):
 async def get_metric_trend(
     metric_type: MetricType,
     days: int = Query(30, ge=1, le=365),
-    aggregation: str = Query("daily_avg", regex="^(daily_avg|daily_max|daily_min|raw)$"),
+    aggregation: str = Query("daily_avg", pattern="^(daily_avg|daily_max|daily_min|raw)$"),
     db: Session = Depends(get_db),
 ):
     """Get trend data for a specific metric over time."""

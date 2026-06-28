@@ -22,6 +22,7 @@ class Source(str, enum.Enum):
     APPLE_HEALTH = "apple_health"
     OURA = "oura"
     GARMIN = "garmin"
+    HEVY = "hevy"
     MANUAL = "manual"
 
 
@@ -152,6 +153,60 @@ class DailySummary(Base):
     created_at = Column(DateTime, default=datetime.utcnow)
 
     __table_args__ = (Index("ix_daily_date_source", "date", "source"),)
+
+
+class HevyExercise(Base):
+    """One exercise within a Hevy workout (e.g. 'Bench Press, idx 0')."""
+
+    __tablename__ = "hevy_exercises"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    workout_id = Column(String(64), nullable=False, index=True)  # Hevy workout id
+    exercise_index = Column(Integer, nullable=False)
+    title = Column(String(255))
+    exercise_template_id = Column(String(64))
+    superset_id = Column(String(64))
+    notes = Column(Text)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    sets = relationship(
+        "HevySet",
+        primaryjoin=(
+            "and_(HevyExercise.workout_id == foreign(HevySet.workout_id),"
+            " HevyExercise.exercise_index == foreign(HevySet.exercise_index))"
+        ),
+        viewonly=True,
+    )
+
+    __table_args__ = (
+        Index("ix_hevy_ex_workout_idx", "workout_id", "exercise_index", unique=True),
+    )
+
+
+class HevySet(Base):
+    """One set within a Hevy exercise."""
+
+    __tablename__ = "hevy_sets"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    workout_id = Column(String(64), nullable=False, index=True)
+    exercise_index = Column(Integer, nullable=False)
+    set_index = Column(Integer, nullable=False)
+    set_type = Column(String(32))  # normal, warmup, dropset, failure, ...
+    weight_kg = Column(Float)
+    reps = Column(Integer)
+    duration_seconds = Column(Integer)
+    distance_meters = Column(Float)
+    rpe = Column(Float)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    __table_args__ = (
+        Index(
+            "ix_hevy_set_unique",
+            "workout_id", "exercise_index", "set_index",
+            unique=True,
+        ),
+    )
 
 
 class DataSource(Base):

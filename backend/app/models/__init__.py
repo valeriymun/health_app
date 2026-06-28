@@ -5,6 +5,8 @@ from app.models.health import (
     Workout,
     DailySummary,
     DataSource,
+    HevyExercise,
+    HevySet,
 )
 
 __all__ = [
@@ -14,4 +16,6 @@ __all__ = [
     "Workout",
     "DailySummary",
     "DataSource",
+    "HevyExercise",
+    "HevySet",
 ]

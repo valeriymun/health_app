@@ -2,6 +2,7 @@
 
 from datetime import date
 
+import httpx
 from fastapi import APIRouter, Depends, File, Header, HTTPException, UploadFile
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
@@ -10,6 +11,11 @@ from app.config import settings
 from app.database import get_db
 from app.services.apple_health import ingest_shortcuts_data, process_xml_export
 from app.services.garmin import sync_garmin_data, sync_garmin_full_history
+from app.services.hevy import (
+    get_workout_count as hevy_workout_count,
+    sync_hevy_full_history,
+    sync_hevy_workouts,
+)
 from app.services.oura import sync_oura_data, sync_oura_full_history
 
 router = APIRouter(prefix="/api/ingest", tags=["ingestion"])
@@ -87,3 +93,34 @@ async def sync_garmin(
     else:
         counts = sync_garmin_data(db, req.start_date, req.end_date)
     return {"status": "ok", "synced": counts}
+
+
+# --- Hevy ---
+
+
+@router.post("/hevy/sync")
+async def sync_hevy(
+    req: SyncRequest = SyncRequest(),
+    db: Session = Depends(get_db),
+):
+    """Sync strength workouts from Hevy."""
+    try:
+        if req.full_history:
+            counts = sync_hevy_full_history(db)
+        else:
+            counts = sync_hevy_workouts(db, req.start_date, req.end_date)
+    except ValueError as e:
+        raise HTTPException(400, str(e))
+    return {"status": "ok", "synced": counts}
+
+
+@router.get("/hevy/status")
+async def hevy_status():
+    """Confirm Hevy credentials work and return the remote workout count."""
+    try:
+        count = hevy_workout_count()
+    except ValueError as e:
+        raise HTTPException(400, str(e))
+    except httpx.HTTPStatusError as e:
+        raise HTTPException(e.response.status_code, f"Hevy API: {e.response.text[:200]}")
+    return {"status": "ok", "remote_workout_count": count}
