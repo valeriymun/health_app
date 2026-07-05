@@ -1,51 +1,84 @@
 @import "tailwindcss";
 
 :root {
-  --bg: #0a0a0f;
-  --bg-card: #12121a;
-  --bg-card-hover: #1a1a25;
-  --border: #1e1e2e;
-  --text: #e4e4e7;
-  --text-muted: #71717a;
-  --accent: #6366f1;
-  --accent-light: #818cf8;
-  --green: #22c55e;
-  --red: #ef4444;
-  --yellow: #eab308;
-  --blue: #3b82f6;
-  --purple: #a855f7;
-  --cyan: #06b6d4;
+  /* Warm earthy palette — light mode */
+  --bg:          #F5F0E8;
+  --bg-card:     #FAF7F2;
+  --border:      #E8E2D8;
+  --text:        #2D2A26;
+  --text2:       #8A8478;
+  --text3:       #B0A99F;
+  --sage:        #7A8B6F;
+  --sage-light:  #A8B89E;
+  --amber:       #C4956A;
+  --terra:       #B5725E;
+
+  /* Night (dark warm) */
+  --nbg:         #1E1C19;
+  --nbg-card:    #26231F;
+  --nborder:     #332F2A;
+  --ntext:       #E8E2D8;
+  --ntext2:      #9A9186;
+  --ntext3:      #6A635A;
+
+  /* Aliases for backward compat with existing components */
+  --accent:      #7A8B6F;
+  --accent-light:#A8B89E;
+  --green:       #7A8B6F;
+  --red:         #B5725E;
+  --yellow:      #C4956A;
+  --blue:        #7A8B6F;
+  --purple:      #8A8478;
+  --cyan:        #A8B89E;
+  --bg-card-hover: #F0EBE1;
+  --text-muted:  #8A8478;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg:       var(--nbg);
+    --bg-card:  var(--nbg-card);
+    --border:   var(--nborder);
+    --text:     var(--ntext);
+    --text2:    var(--ntext2);
+    --text3:    var(--ntext3);
+    --text-muted: var(--ntext2);
+    --bg-card-hover: #2E2B26;
+  }
 }
 
 body {
   background: var(--bg);
   color: var(--text);
-  font-family: system-ui, -apple-system, sans-serif;
+  font-family: 'DM Sans', -apple-system, system-ui, sans-serif;
+  font-weight: 400;
+  -webkit-font-smoothing: antialiased;
 }
 
 .card {
   background: var(--bg-card);
   border: 1px solid var(--border);
   border-radius: 12px;
-  padding: 1.25rem;
+  padding: 1rem;
 }
 
 .card:hover {
-  border-color: var(--accent);
-  transition: border-color 0.2s;
+  background: var(--bg-card-hover);
+  transition: background 0.15s;
 }
 
 .stat-value {
-  font-size: 2rem;
-  font-weight: 700;
+  font-size: 1.75rem;
+  font-weight: 500;
   line-height: 1;
 }
 
 .stat-label {
-  font-size: 0.75rem;
-  color: var(--text-muted);
+  font-size: 0.6875rem;
+  color: var(--text3);
   text-transform: uppercase;
-  letter-spacing: 0.05em;
+  letter-spacing: 0.06em;
+  font-weight: 500;
 }
 
 .btn {
@@ -55,29 +88,31 @@ body {
   font-weight: 500;
   cursor: pointer;
   transition: all 0.15s;
+  font-family: 'DM Sans', sans-serif;
 }
 
 .btn-primary {
-  background: var(--accent);
-  color: white;
+  background: var(--sage);
+  color: #FAF7F2;
+  border: none;
 }
 
 .btn-primary:hover {
-  background: var(--accent-light);
+  background: var(--sage-light);
 }
 
 .btn-outline {
   background: transparent;
   border: 1px solid var(--border);
-  color: var(--text);
+  color: var(--text2);
 }
 
 .btn-outline:hover {
-  border-color: var(--accent);
-  color: var(--accent-light);
+  border-color: var(--sage);
+  color: var(--sage);
 }
 
 .tab-active {
-  color: var(--accent-light);
-  border-bottom: 2px solid var(--accent);
+  color: var(--sage);
+  border-bottom: 2px solid var(--sage);
 }

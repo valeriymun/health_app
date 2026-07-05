@@ -1,354 +1,195 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
-import {
-  Heart,
-  Moon,
-  Footprints,
-  Activity,
-  Flame,
-  Wind,
-  Download,
-  RefreshCw,
-  Settings,
-  TrendingUp,
-  Zap,
-} from "lucide-react";
-import StatCard from "@/components/StatCard";
-import SleepChart from "@/components/SleepChart";
-import TrendChart from "@/components/TrendChart";
-import WorkoutList from "@/components/WorkoutList";
-import {
-  getOverview,
-  getMetricTrend,
-  getSleepTrends,
-  downloadReport,
-} from "@/lib/api";
+import { useState } from "react";
+import HomeTab from "@/components/HomeTab";
+import HistoryTab from "@/components/HistoryTab";
 
-type Tab = "overview" | "sleep" | "activity" | "trends";
+type MainTab = "home" | "history";
+type HistorySubTab = "trends" | "intake" | "ask";
 
 export default function Dashboard() {
-  const [tab, setTab] = useState<Tab>("overview");
-  const [overview, setOverview] = useState<any>(null);
-  const [sleepTrends, setSleepTrends] = useState<any>(null);
-  const [rhrTrend, setRhrTrend] = useState<any>(null);
-  const [hrvTrend, setHrvTrend] = useState<any>(null);
-  const [stepsTrend, setStepsTrend] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [days, setDays] = useState(30);
+  const [tab, setTab] = useState<MainTab>("home");
+  const [historySub, setHistorySub] = useState<HistorySubTab>("trends");
+  const [askClaudeQuery, setAskClaudeQuery] = useState<string>("");
 
-  const fetchData = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const [ov, sleep, rhr, hrv, steps] = await Promise.all([
-        getOverview(),
-        getSleepTrends(days),
-        getMetricTrend("resting_heart_rate", days),
-        getMetricTrend("hrv", days),
-        getMetricTrend("steps", days),
-      ]);
-      setOverview(ov);
-      setSleepTrends(sleep);
-      setRhrTrend(rhr);
-      setHrvTrend(hrv);
-      setStepsTrend(steps);
-    } catch (e: any) {
-      setError(e.message);
-    } finally {
-      setLoading(false);
-    }
-  }, [days]);
+  const now = new Date();
+  const dateStr = now.toLocaleDateString("en-GB", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+  });
 
-  useEffect(() => {
-    fetchData();
-  }, [fetchData]);
+  const hour = now.getHours();
+  const greeting =
+    hour < 11 ? "Good morning" : hour < 19 ? "Good afternoon" : "Good evening";
 
-  const latestDaily = overview?.daily?.[0] || {};
-  const latestSleep = overview?.sleep?.[0] || {};
+  function openAsk(query: string) {
+    setAskClaudeQuery(query);
+    setHistorySub("ask");
+    setTab("history");
+  }
 
   return (
-    <div className="min-h-screen p-4 md:p-8 max-w-7xl mx-auto">
+    <div
+      style={{
+        minHeight: "100dvh",
+        maxWidth: 430,
+        margin: "0 auto",
+        display: "flex",
+        flexDirection: "column",
+        background: "var(--bg)",
+        position: "relative",
+      }}
+    >
       {/* Header */}
-      <div className="flex items-center justify-between mb-8">
+      <div
+        style={{
+          padding: "52px 20px 0",
+          display: "flex",
+          alignItems: "flex-start",
+          justifyContent: "space-between",
+        }}
+      >
         <div>
-          <h1 className="text-2xl font-bold flex items-center gap-2">
-            <Activity size={28} color="var(--accent-light)" />
-            Health Dashboard
-          </h1>
-          <p className="text-sm mt-1" style={{ color: "var(--text-muted)" }}>
-            Apple Health + Oura Ring + Garmin
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
-          <select
-            className="btn btn-outline"
-            value={days}
-            onChange={(e) => setDays(Number(e.target.value))}
+          <div
+            style={{
+              fontSize: 13,
+              color: "var(--text2)",
+              marginBottom: 2,
+              fontWeight: 500,
+            }}
           >
-            <option value={7}>7 days</option>
-            <option value={14}>14 days</option>
-            <option value={30}>30 days</option>
-            <option value={90}>90 days</option>
-            <option value={180}>6 months</option>
-            <option value={365}>1 year</option>
-          </select>
-          <button className="btn btn-outline" onClick={fetchData} title="Refresh">
-            <RefreshCw size={16} />
-          </button>
-          <button
-            className="btn btn-primary flex items-center gap-1.5"
-            onClick={() => downloadReport(days, "markdown")}
-          >
-            <Download size={16} />
-            Report
-          </button>
-          <a href="/settings" className="btn btn-outline" title="Settings">
-            <Settings size={16} />
-          </a>
+            {dateStr}
+          </div>
+          <div style={{ fontSize: 22, fontWeight: 500, color: "var(--text)" }}>
+            {greeting}
+          </div>
         </div>
+        <button
+          style={{
+            width: 36,
+            height: 36,
+            borderRadius: 10,
+            border: "1px solid var(--border)",
+            background: "var(--bg-card)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            cursor: "pointer",
+            marginTop: 2,
+          }}
+          aria-label="Settings"
+        >
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="var(--text2)"
+            strokeWidth="1.8"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <circle cx="12" cy="12" r="3" />
+            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
+          </svg>
+        </button>
       </div>
 
-      {/* Tabs */}
+      {/* Tab content */}
+      <div style={{ flex: 1, overflow: "auto", paddingBottom: 80 }}>
+        {tab === "home" && <HomeTab onAskClaude={openAsk} />}
+        {tab === "history" && (
+          <HistoryTab
+            subTab={historySub}
+            onSubTabChange={setHistorySub}
+            askQuery={askClaudeQuery}
+            onAskQueryChange={setAskClaudeQuery}
+          />
+        )}
+      </div>
+
+      {/* Bottom tab bar */}
       <div
-        className="flex gap-6 mb-6 border-b pb-2"
-        style={{ borderColor: "var(--border)" }}
+        style={{
+          position: "fixed",
+          bottom: 0,
+          left: "50%",
+          transform: "translateX(-50%)",
+          width: "100%",
+          maxWidth: 430,
+          borderTop: "1px solid var(--border)",
+          background: "var(--bg-card)",
+          display: "flex",
+          padding: "10px 0 26px",
+          zIndex: 100,
+        }}
       >
         {(
           [
-            ["overview", "Overview"],
-            ["sleep", "Sleep"],
-            ["activity", "Activity"],
-            ["trends", "Trends"],
-          ] as [Tab, string][]
-        ).map(([key, label]) => (
+            {
+              key: "home" as MainTab,
+              label: "Home",
+              icon: (
+                <svg
+                  width="22"
+                  height="22"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.8"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+                  <polyline points="9 22 9 12 15 12 15 22" />
+                </svg>
+              ),
+            },
+            {
+              key: "history" as MainTab,
+              label: "History",
+              icon: (
+                <svg
+                  width="22"
+                  height="22"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.8"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                >
+                  <polyline points="22 12 18 12 15 21 9 3 6 12 2 12" />
+                </svg>
+              ),
+            },
+          ] as { key: MainTab; label: string; icon: React.ReactNode }[]
+        ).map(({ key, label, icon }) => (
           <button
             key={key}
             onClick={() => setTab(key)}
-            className={`pb-2 text-sm font-medium transition-colors ${
-              tab === key ? "tab-active" : ""
-            }`}
-            style={{ color: tab === key ? "var(--accent-light)" : "var(--text-muted)" }}
+            style={{
+              flex: 1,
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              gap: 4,
+              background: "none",
+              border: "none",
+              cursor: "pointer",
+              color: tab === key ? "var(--sage)" : "var(--text3)",
+              fontFamily: "'DM Sans', sans-serif",
+              fontSize: 11,
+              fontWeight: 500,
+              transition: "color 0.15s",
+            }}
           >
+            {icon}
             {label}
           </button>
         ))}
       </div>
-
-      {error && (
-        <div
-          className="card mb-6 text-sm"
-          style={{ borderColor: "var(--red)", color: "var(--red)" }}
-        >
-          Failed to load data: {error}. Make sure the backend is running on port
-          8000.
-        </div>
-      )}
-
-      {loading && !overview && (
-        <div className="flex items-center justify-center py-20">
-          <RefreshCw
-            size={24}
-            className="animate-spin"
-            color="var(--accent-light)"
-          />
-        </div>
-      )}
-
-      {/* Overview Tab */}
-      {tab === "overview" && overview && (
-        <>
-          {/* Stat cards */}
-          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-4 mb-6">
-            <StatCard
-              label="Resting HR"
-              value={latestDaily.resting_heart_rate}
-              unit="bpm"
-              icon={<Heart size={18} />}
-              color="var(--red)"
-            />
-            <StatCard
-              label="HRV"
-              value={latestDaily.avg_hrv}
-              unit="ms"
-              icon={<TrendingUp size={18} />}
-              color="var(--green)"
-            />
-            <StatCard
-              label="Steps"
-              value={
-                latestDaily.steps
-                  ? Number(latestDaily.steps).toLocaleString()
-                  : null
-              }
-              icon={<Footprints size={18} />}
-              color="var(--blue)"
-            />
-            <StatCard
-              label="Sleep"
-              value={
-                latestSleep.total_minutes
-                  ? `${(latestSleep.total_minutes / 60).toFixed(1)}`
-                  : null
-              }
-              unit="hrs"
-              icon={<Moon size={18} />}
-              color="var(--purple)"
-            />
-            <StatCard
-              label="Active Cal"
-              value={
-                latestDaily.calories_active
-                  ? Math.round(latestDaily.calories_active)
-                  : null
-              }
-              unit="kcal"
-              icon={<Flame size={18} />}
-              color="var(--yellow)"
-            />
-            <StatCard
-              label="Readiness"
-              value={latestDaily.readiness_score}
-              icon={<Zap size={18} />}
-              color="var(--cyan)"
-            />
-          </div>
-
-          {/* Charts */}
-          <div className="grid md:grid-cols-2 gap-4 mb-6">
-            {sleepTrends?.data?.length > 0 && (
-              <SleepChart data={sleepTrends.data} />
-            )}
-            <WorkoutList workouts={overview.workouts || []} />
-          </div>
-
-          <div className="grid md:grid-cols-3 gap-4 mb-6">
-            {rhrTrend?.data?.length > 0 && (
-              <TrendChart
-                title="Resting Heart Rate"
-                data={rhrTrend.data}
-                color="var(--red)"
-                unit="bpm"
-              />
-            )}
-            {hrvTrend?.data?.length > 0 && (
-              <TrendChart
-                title="HRV"
-                data={hrvTrend.data}
-                color="var(--green)"
-                unit="ms"
-              />
-            )}
-            {stepsTrend?.data?.length > 0 && (
-              <TrendChart
-                title="Daily Steps"
-                data={stepsTrend.data}
-                color="var(--blue)"
-                unit="steps"
-              />
-            )}
-          </div>
-
-          {/* Data stats */}
-          <div className="card">
-            <h3
-              className="text-sm font-medium mb-3"
-              style={{ color: "var(--text-muted)" }}
-            >
-              DATA SUMMARY
-            </h3>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-              <div>
-                <span style={{ color: "var(--text-muted)" }}>Metrics: </span>
-                <span className="font-medium">
-                  {overview.stats.total_metrics.toLocaleString()}
-                </span>
-              </div>
-              <div>
-                <span style={{ color: "var(--text-muted)" }}>Sleep Sessions: </span>
-                <span className="font-medium">
-                  {overview.stats.total_sleep_sessions}
-                </span>
-              </div>
-              <div>
-                <span style={{ color: "var(--text-muted)" }}>Workouts: </span>
-                <span className="font-medium">
-                  {overview.stats.total_workouts}
-                </span>
-              </div>
-              <div>
-                <span style={{ color: "var(--text-muted)" }}>Days Tracked: </span>
-                <span className="font-medium">
-                  {overview.stats.total_days_tracked}
-                </span>
-              </div>
-            </div>
-          </div>
-        </>
-      )}
-
-      {/* Sleep Tab */}
-      {tab === "sleep" && sleepTrends && (
-        <div className="space-y-4">
-          <SleepChart data={sleepTrends.data || []} />
-          {hrvTrend?.data?.length > 0 && (
-            <TrendChart
-              title="Sleep HRV Trend"
-              data={hrvTrend.data}
-              color="var(--green)"
-              unit="ms"
-            />
-          )}
-        </div>
-      )}
-
-      {/* Activity Tab */}
-      {tab === "activity" && overview && (
-        <div className="space-y-4">
-          <div className="grid md:grid-cols-2 gap-4">
-            {stepsTrend?.data?.length > 0 && (
-              <TrendChart
-                title="Daily Steps"
-                data={stepsTrend.data}
-                color="var(--blue)"
-                unit="steps"
-              />
-            )}
-            <WorkoutList workouts={overview.workouts || []} />
-          </div>
-        </div>
-      )}
-
-      {/* Trends Tab */}
-      {tab === "trends" && (
-        <div className="grid md:grid-cols-2 gap-4">
-          {rhrTrend?.data?.length > 0 && (
-            <TrendChart
-              title="Resting Heart Rate"
-              data={rhrTrend.data}
-              color="var(--red)"
-              unit="bpm"
-            />
-          )}
-          {hrvTrend?.data?.length > 0 && (
-            <TrendChart
-              title="HRV"
-              data={hrvTrend.data}
-              color="var(--green)"
-              unit="ms"
-            />
-          )}
-          {stepsTrend?.data?.length > 0 && (
-            <TrendChart
-              title="Daily Steps"
-              data={stepsTrend.data}
-              color="var(--blue)"
-              unit="steps"
-            />
-          )}
-        </div>
-      )}
     </div>
   );
 }

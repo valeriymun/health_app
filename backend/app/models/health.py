@@ -209,6 +209,18 @@ class HevySet(Base):
     )
 
 
+class BacReading(Base):
+    """A logged alcohol intake event."""
+
+    __tablename__ = "bac_readings"
+
+    id = Column(Integer, primary_key=True, autoincrement=True)
+    timestamp = Column(DateTime, nullable=False, index=True, default=datetime.utcnow)
+    units = Column(Float, nullable=False)  # UK units (1 unit = 8g ethanol)
+    notes = Column(Text)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+
 class DataSource(Base):
     __tablename__ = "data_sources"
 
